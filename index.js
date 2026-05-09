@@ -18,20 +18,16 @@ const client = new Client({
 const ROLE_ID = "1502116113192845382";
 const CHANNEL_ID = "1502120027778977882";
 
-client.once(Events.ClientReady, async (client) => {
+client.once("clientReady", async (client) => {
   console.log(`bot iniciado como ${client.user.tag}`);
 
   try {
-    console.log("buscando canal...");
-
     const channel = await client.channels.fetch(CHANNEL_ID);
 
     if (!channel) {
       console.log("❌ canal no encontrado");
       return;
     }
-
-    console.log("canal encontrado:", channel.name);
 
     const embed = new EmbedBuilder()
       .setTitle("verificación requerida")
@@ -53,8 +49,7 @@ client.once(Events.ClientReady, async (client) => {
     console.log("mensaje de verificación enviado ✔");
 
   } catch (err) {
-    console.error("❌ ERROR EN READY:");
-    console.error(err);
+    console.error("❌ error enviando mensaje:", err);
   }
 });
 
