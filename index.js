@@ -1,97 +1,85 @@
-const { 
-    Client, 
-    GatewayIntentBits, 
-    Partials, 
-    ActionRowBuilder, 
-    ButtonBuilder, 
-    ButtonStyle, 
-    Events 
-} = require('discord.js');
-
-require('dotenv').config();
+const {
+  Client,
+  GatewayIntentBits,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  Events
+} = require("discord.js");
 
 const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
-    ],
-    partials: [Partials.Channel]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers
+  ]
 });
 
-// bot listo
-client.once('ready', () => {
-    console.log(`bot iniciado como ${client.user.tag}`);
+// 🔐 tus IDs
+const ROLE_ID = "1502116113192845382";
+const CHANNEL_ID = "1502120027778977882";
+
+client.once(Events.ClientReady, async () => {
+  console.log(`bot iniciado como ${client.user.tag}`);
+
+  try {
+    const channel = await client.channels.fetch(CHANNEL_ID);
+
+    const embed = new EmbedBuilder()
+      .setTitle("verificación requerida")
+      .setDescription("haz clic en el botón para obtener acceso al servidor.")
+      .setColor(0x2b2d31);
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("verify")
+        .setLabel("verificarme")
+        .setStyle(ButtonStyle.Success)
+    );
+
+    await channel.send({
+      embeds: [embed],
+      components: [row]
+    });
+
+  } catch (err) {
+    console.error("error enviando mensaje de verificación:", err);
+  }
 });
 
-// comando para enviar el mensaje de verificación
-client.on('messageCreate', async message => {
-    if (message.author.bot) return;
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isButton()) return;
 
-    if (message.content === '!setupverify') {
+  if (interaction.customId === "verify") {
+    try {
+      const member = await interaction.guild.members.fetch(interaction.user.id);
 
-        const row = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('verify_button')
-                    .setLabel('verificarse')
-                    .setStyle(ButtonStyle.Success)
-            );
-
-        await message.channel.send({
-            content: 
-`👋 bienvenido al servidor
-
-para acceder a todos los canales debes verificarte
-
-pulsa el botón de abajo 👇`,
-            components: [row]
+      // si ya tiene rol
+      if (member.roles.cache.has(ROLE_ID)) {
+        return interaction.reply({
+          content: "ya estás verificado ✔",
+          ephemeral: true
         });
+      }
+
+      await member.roles.add(ROLE_ID);
+
+      return interaction.reply({
+        content: "te has verificado correctamente ✔ bienvenido",
+        ephemeral: true
+      });
+
+    } catch (err) {
+      console.error(err);
+
+      if (!interaction.replied) {
+        interaction.reply({
+          content: "ocurrió un error al verificarte ❌",
+          ephemeral: true
+        });
+      }
     }
+  }
 });
 
-// sistema del botón (ARREGLADO)
-client.on(Events.InteractionCreate, async interaction => {
-
-    if (!interaction.isButton()) return;
-
-    if (interaction.customId === 'verify_button') {
-
-        try {
-            const role = interaction.guild.roles.cache.find(r => r.name === 'verificado');
-
-            if (!role) {
-                return interaction.reply({
-                    content: '❌ no existe el rol "verificado"',
-                    ephemeral: true
-                });
-            }
-
-            if (!interaction.member) {
-                return interaction.reply({
-                    content: '❌ no se pudo obtener el usuario',
-                    ephemeral: true
-                });
-            }
-
-            await interaction.member.roles.add(role);
-
-            return interaction.reply({
-                content: '✔ te has verificado correctamente',
-                ephemeral: true
-            });
-
-        } catch (err) {
-            console.log(err);
-
-            return interaction.reply({
-                content: '❌ ocurrió un error al verificarte',
-                ephemeral: true
-            });
-        }
-    }
-});
-
-// login
 client.login(process.env.TOKEN);
