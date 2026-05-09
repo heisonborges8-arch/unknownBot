@@ -22,17 +22,20 @@ client.once(Events.ClientReady, async (client) => {
   console.log(`bot iniciado como ${client.user.tag}`);
 
   try {
+    console.log("buscando canal...");
+
     const channel = await client.channels.fetch(CHANNEL_ID);
 
     if (!channel) {
-      return console.log("❌ no se encontró el canal");
+      console.log("❌ canal no encontrado");
+      return;
     }
 
     console.log("canal encontrado:", channel.name);
 
     const embed = new EmbedBuilder()
       .setTitle("verificación requerida")
-      .setDescription("haz clic en el botón para verificarte y obtener acceso al servidor.")
+      .setDescription("haz clic en el botón para verificarte y obtener acceso.")
       .setColor(0x2b2d31);
 
     const row = new ActionRowBuilder().addComponents(
@@ -50,7 +53,8 @@ client.once(Events.ClientReady, async (client) => {
     console.log("mensaje de verificación enviado ✔");
 
   } catch (err) {
-    console.error("❌ ERROR ENVIANDO MENSAJE:", err);
+    console.error("❌ ERROR EN READY:");
+    console.error(err);
   }
 });
 
