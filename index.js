@@ -1,4 +1,4 @@
-console.log("🔥 CAMBIO REAL DETECTADO");const {
+const {
   Client,
   GatewayIntentBits,
   ActionRowBuilder,
@@ -8,30 +8,36 @@ console.log("🔥 CAMBIO REAL DETECTADO");const {
   Events
 } = require("discord.js");
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
-});
+require("dotenv").config();
 
 const CHANNEL_ID = "1502120027778977882";
 const ROLE_NAME = "unknownVerify";
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers
+  ]
+});
 
 /* =========================
    READY
 ========================= */
 client.once(Events.ClientReady, async (c) => {
   console.log(`bot iniciado como ${c.user.tag}`);
+  console.log("🔥 VERIFICATION SYSTEM ONLINE");
 
   try {
     const channel = await c.channels.fetch(CHANNEL_ID);
 
+    if (!channel) {
+      console.log("❌ canal no encontrado");
+      return;
+    }
+
     const embed = new EmbedBuilder()
       .setTitle("verificación requerida")
-      .setDescription("haz clic en el botón para verificarte.")
+      .setDescription("haz clic en el botón para verificarte y acceder al servidor.")
       .setColor(0x2b2d31);
 
     const row = new ActionRowBuilder().addComponents(
@@ -54,7 +60,7 @@ client.once(Events.ClientReady, async (c) => {
 });
 
 /* =========================
-   BOTÓN
+   INTERACCIONES
 ========================= */
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
@@ -63,8 +69,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
       const member = await interaction.guild.members.fetch(interaction.user.id);
 
-      // 🔎 buscar rol por nombre
-      const role = interaction.guild.roles.cache.find(r => r.name === ROLE_NAME);
+      const role = interaction.guild.roles.cache.find(
+        r => r.name === ROLE_NAME
+      );
 
       if (!role) {
         return interaction.reply({
@@ -88,7 +95,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
 
     } catch (err) {
-      console.error(err);
+      console.error("error verificación:", err);
 
       if (!interaction.replied) {
         interaction.reply({
