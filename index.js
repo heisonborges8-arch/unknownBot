@@ -15,13 +15,9 @@ const client = new Client({
   ]
 });
 
-// 🔐 IDs
 const ROLE_ID = "1502116113192845382";
 const CHANNEL_ID = "1502120027778977882";
 
-/* =========================
-   READY
-========================= */
 client.once(Events.ClientReady, async (c) => {
   console.log(`bot iniciado como ${c.user.tag}`);
 
@@ -29,13 +25,15 @@ client.once(Events.ClientReady, async (c) => {
     const channel = await c.channels.fetch(CHANNEL_ID);
 
     if (!channel) {
-      console.log("❌ canal no encontrado");
+      console.log("❌ no se encontró el canal");
       return;
     }
 
+    console.log("canal encontrado ✔");
+
     const embed = new EmbedBuilder()
       .setTitle("verificación requerida")
-      .setDescription("haz clic en el botón para verificarte y obtener acceso al servidor.")
+      .setDescription("haz clic en el botón para verificarte")
       .setColor(0x2b2d31);
 
     const row = new ActionRowBuilder().addComponents(
@@ -45,21 +43,16 @@ client.once(Events.ClientReady, async (c) => {
         .setStyle(ButtonStyle.Success)
     );
 
-    await channel.send({
-      embeds: [embed],
-      components: [row]
-    });
+    await channel.send({ embeds: [embed], components: [row] });
 
-    console.log("mensaje de verificación enviado ✔");
+    console.log("mensaje enviado ✔");
 
   } catch (err) {
-    console.error("error en ready:", err);
+    console.error("❌ ERROR REAL:");
+    console.error(err);
   }
 });
 
-/* =========================
-   BOTÓN
-========================= */
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
 
@@ -67,36 +60,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
       const member = await interaction.guild.members.fetch(interaction.user.id);
 
-      // ya verificado
       if (member.roles.cache.has(ROLE_ID)) {
-        return interaction.reply({
-          content: "ya estás verificado ✔",
-          flags: 64
-        });
+        return interaction.reply({ content: "ya estás verificado ✔", flags: 64 });
       }
 
-      // asignar rol
       await member.roles.add(ROLE_ID);
 
-      return interaction.reply({
-        content: "te has verificado correctamente ✔",
-        flags: 64
-      });
+      return interaction.reply({ content: "verificado correctamente ✔", flags: 64 });
 
     } catch (err) {
-      console.error("error en verificación:", err);
+      console.error(err);
 
       if (!interaction.replied) {
-        interaction.reply({
-          content: "ocurrió un error al verificarte ❌",
-          flags: 64
-        });
+        interaction.reply({ content: "error al verificar ❌", flags: 64 });
       }
     }
   }
 });
 
-/* =========================
-   LOGIN
-========================= */
 client.login(process.env.TOKEN);
