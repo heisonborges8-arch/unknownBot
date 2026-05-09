@@ -15,44 +15,52 @@ const client = new Client({
   ]
 });
 
+// 🔐 IDs
 const ROLE_ID = "1502116113192845382";
 const CHANNEL_ID = "1502120027778977882";
 
-client.once("clientReady", async (client) => {
-  console.log(`bot iniciado como ${client.user.tag}`);
+/* =========================
+   READY EVENT
+========================= */
+client.once(Events.ClientReady, async (c) => {
+  console.log(`bot iniciado como ${c.user.tag}`);
 
   try {
-    const channel = await client.channels.fetch(CHANNEL_ID);
+    const channel = await c.channels.fetch(CHANNEL_ID);
 
     if (!channel) {
       console.log("❌ canal no encontrado");
       return;
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle("verificación requerida")
-      .setDescription("haz clic en el botón para verificarte y obtener acceso.")
-      .setColor(0x2b2d31);
-
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("verify")
-        .setLabel("verificarme")
-        .setStyle(ButtonStyle.Success)
-    );
-
     await channel.send({
-      embeds: [embed],
-      components: [row]
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("verificación requerida")
+          .setDescription("haz clic en el botón para verificarte y obtener acceso al servidor.")
+          .setColor(0x2b2d31)
+      ],
+      components: [
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("verify")
+            .setLabel("verificarme")
+            .setStyle(ButtonStyle.Success)
+        )
+      ]
     });
 
     console.log("mensaje de verificación enviado ✔");
 
   } catch (err) {
-    console.error("❌ error enviando mensaje:", err);
+    console.error("❌ error enviando mensaje:");
+    console.error(err);
   }
 });
 
+/* =========================
+   INTERACCIONES (BOTÓN)
+========================= */
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
 
@@ -75,7 +83,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
 
     } catch (err) {
-      console.error(err);
+      console.error("error en verificación:", err);
 
       if (!interaction.replied) {
         interaction.reply({
@@ -87,4 +95,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
+/* =========================
+   LOGIN
+========================= */
 client.login(process.env.TOKEN);
