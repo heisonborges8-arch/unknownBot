@@ -15,19 +15,20 @@ const client = new Client({
   ]
 });
 
-// 🔐 tus IDs
 const ROLE_ID = "1502116113192845382";
 const CHANNEL_ID = "1502120027778977882";
 
-client.once(Events.ClientReady, async () => {
+client.once(Events.ClientReady, async (client) => {
   console.log(`bot iniciado como ${client.user.tag}`);
 
   try {
     const channel = await client.channels.fetch(CHANNEL_ID);
 
+    if (!channel) return console.log("canal no encontrado");
+
     const embed = new EmbedBuilder()
       .setTitle("verificación requerida")
-      .setDescription("haz clic en el botón para obtener acceso al servidor.")
+      .setDescription("haz clic en el botón para verificarte y obtener acceso.")
       .setColor(0x2b2d31);
 
     const row = new ActionRowBuilder().addComponents(
@@ -42,8 +43,10 @@ client.once(Events.ClientReady, async () => {
       components: [row]
     });
 
+    console.log("mensaje de verificación enviado ✔");
+
   } catch (err) {
-    console.error("error enviando mensaje de verificación:", err);
+    console.error("error enviando mensaje:", err);
   }
 });
 
@@ -54,19 +57,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
       const member = await interaction.guild.members.fetch(interaction.user.id);
 
-      // si ya tiene rol
       if (member.roles.cache.has(ROLE_ID)) {
         return interaction.reply({
           content: "ya estás verificado ✔",
-          ephemeral: true
+          flags: 64
         });
       }
 
       await member.roles.add(ROLE_ID);
 
       return interaction.reply({
-        content: "te has verificado correctamente ✔ bienvenido",
-        ephemeral: true
+        content: "te has verificado correctamente ✔",
+        flags: 64
       });
 
     } catch (err) {
@@ -75,7 +77,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       if (!interaction.replied) {
         interaction.reply({
           content: "ocurrió un error al verificarte ❌",
-          ephemeral: true
+          flags: 64
         });
       }
     }
