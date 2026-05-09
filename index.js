@@ -15,25 +15,44 @@ const client = new Client({
   ]
 });
 
-const ROLE_ID = "1502116113192845382";
 const CHANNEL_ID = "1502120027778977882";
+const ROLE_ID = "1502116113192845382"; // unknownVerify
 
+let cachedRole = null;
+
+/* =========================
+   READY
+========================= */
 client.once(Events.ClientReady, async (c) => {
   console.log(`bot iniciado como ${c.user.tag}`);
 
   try {
-    const channel = await c.channels.fetch(CHANNEL_ID);
+    const guild = c.guilds.cache.first();
 
-    if (!channel) {
-      console.log("❌ no se encontró el canal");
+    if (!guild) {
+      console.log("❌ no hay servidor en cache");
       return;
     }
 
-    console.log("canal encontrado ✔");
+    // 🔎 detectar rol por ID desde el servidor
+    cachedRole = guild.roles.cache.get(ROLE_ID);
+
+    if (!cachedRole) {
+      console.log("❌ rol unknownVerify no encontrado");
+    } else {
+      console.log("rol detectado ✔:", cachedRole.name);
+    }
+
+    const channel = await c.channels.fetch(CHANNEL_ID);
+
+    if (!channel) {
+      console.log("❌ canal no encontrado");
+      return;
+    }
 
     const embed = new EmbedBuilder()
       .setTitle("verificación requerida")
-      .setDescription("haz clic en el botón para verificarte")
+      .setDescription("haz clic en el botón para verificarte y obtener acceso.")
       .setColor(0x2b2d31);
 
     const row = new ActionRowBuilder().addComponents(
@@ -43,16 +62,21 @@ client.once(Events.ClientReady, async (c) => {
         .setStyle(ButtonStyle.Success)
     );
 
-    await channel.send({ embeds: [embed], components: [row] });
+    await channel.send({
+      embeds: [embed],
+      components: [row]
+    });
 
     console.log("mensaje enviado ✔");
 
   } catch (err) {
-    console.error("❌ ERROR REAL:");
-    console.error(err);
+    console.error("error en ready:", err);
   }
 });
 
+/* =========================
+   BOTÓN
+========================= */
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
 
@@ -60,22 +84,43 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
       const member = await interaction.guild.members.fetch(interaction.user.id);
 
-      if (member.roles.cache.has(ROLE_ID)) {
-        return interaction.reply({ content: "ya estás verificado ✔", flags: 64 });
+      const role = cachedRole || interaction.guild.roles.cache.get(ROLE_ID);
+
+      if (!role) {
+        return interaction.reply({
+          content: "❌ rol unknownVerify no existe",
+          flags: 64
+        });
       }
 
-      await member.roles.add(ROLE_ID);
+      if (member.roles.cache.has(role.id)) {
+        return interaction.reply({
+          content: "ya estás verificado ✔",
+          flags: 64
+        });
+      }
 
-      return interaction.reply({ content: "verificado correctamente ✔", flags: 64 });
+      await member.roles.add(role);
+
+      return interaction.reply({
+        content: "te has verificado correctamente ✔",
+        flags: 64
+      });
 
     } catch (err) {
-      console.error(err);
+      console.error("error en verificación:", err);
 
       if (!interaction.replied) {
-        interaction.reply({ content: "error al verificar ❌", flags: 64 });
+        interaction.reply({
+          content: "ocurrió un error al verificarte ❌",
+          flags: 64
+        });
       }
     }
   }
 });
 
+/* =========================
+   LOGIN
+========================= */
 client.login(process.env.TOKEN);
