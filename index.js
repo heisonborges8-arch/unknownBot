@@ -1,4 +1,4 @@
-const {
+console.log("🔥 CAMBIO REAL DETECTADO");const {
   Client,
   GatewayIntentBits,
   ActionRowBuilder,
