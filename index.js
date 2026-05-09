@@ -20,7 +20,7 @@ const ROLE_ID = "1502116113192845382";
 const CHANNEL_ID = "1502120027778977882";
 
 /* =========================
-   READY EVENT
+   READY
 ========================= */
 client.once(Events.ClientReady, async (c) => {
   console.log(`bot iniciado como ${c.user.tag}`);
@@ -33,33 +33,32 @@ client.once(Events.ClientReady, async (c) => {
       return;
     }
 
+    const embed = new EmbedBuilder()
+      .setTitle("verificación requerida")
+      .setDescription("haz clic en el botón para verificarte y obtener acceso al servidor.")
+      .setColor(0x2b2d31);
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("verify")
+        .setLabel("verificarme")
+        .setStyle(ButtonStyle.Success)
+    );
+
     await channel.send({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle("verificación requerida")
-          .setDescription("haz clic en el botón para verificarte y obtener acceso al servidor.")
-          .setColor(0x2b2d31)
-      ],
-      components: [
-        new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId("verify")
-            .setLabel("verificarme")
-            .setStyle(ButtonStyle.Success)
-        )
-      ]
+      embeds: [embed],
+      components: [row]
     });
 
     console.log("mensaje de verificación enviado ✔");
 
   } catch (err) {
-    console.error("❌ error enviando mensaje:");
-    console.error(err);
+    console.error("error en ready:", err);
   }
 });
 
 /* =========================
-   INTERACCIONES (BOTÓN)
+   BOTÓN
 ========================= */
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
@@ -68,6 +67,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
       const member = await interaction.guild.members.fetch(interaction.user.id);
 
+      // ya verificado
       if (member.roles.cache.has(ROLE_ID)) {
         return interaction.reply({
           content: "ya estás verificado ✔",
@@ -75,6 +75,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         });
       }
 
+      // asignar rol
       await member.roles.add(ROLE_ID);
 
       return interaction.reply({
