@@ -17,12 +17,11 @@ const client = new Client({
   ]
 });
 
-// 🔐 CONFIG
-const ROLE_ID = "1502116113192845382"; // unknownVerify
 const CHANNEL_ID = "1502120027778977882";
+const ROLE_NAME = "unknownVerify";
 
 /* =========================
-   READY (AUTO MESSAGE)
+   READY
 ========================= */
 client.once(Events.ClientReady, async (c) => {
   console.log(`bot iniciado como ${c.user.tag}`);
@@ -30,14 +29,9 @@ client.once(Events.ClientReady, async (c) => {
   try {
     const channel = await c.channels.fetch(CHANNEL_ID);
 
-    if (!channel) {
-      console.log("❌ canal no encontrado");
-      return;
-    }
-
     const embed = new EmbedBuilder()
       .setTitle("verificación requerida")
-      .setDescription("haz clic en el botón para verificarte y obtener acceso al servidor.")
+      .setDescription("haz clic en el botón para verificarte.")
       .setColor(0x2b2d31);
 
     const row = new ActionRowBuilder().addComponents(
@@ -52,7 +46,7 @@ client.once(Events.ClientReady, async (c) => {
       components: [row]
     });
 
-    console.log("mensaje automático enviado ✔");
+    console.log("mensaje de verificación enviado ✔");
 
   } catch (err) {
     console.error("error en ready:", err);
@@ -60,40 +54,7 @@ client.once(Events.ClientReady, async (c) => {
 });
 
 /* =========================
-   COMANDO !setupverify (OPCIONAL)
-========================= */
-client.on("messageCreate", async (message) => {
-  if (message.author.bot) return;
-
-  if (message.content === "!setupverify") {
-    try {
-      const embed = new EmbedBuilder()
-        .setTitle("verificación requerida")
-        .setDescription("haz clic en el botón para verificarte.")
-        .setColor(0x2b2d31);
-
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("verify")
-          .setLabel("verificarme")
-          .setStyle(ButtonStyle.Success)
-      );
-
-      await message.channel.send({
-        embeds: [embed],
-        components: [row]
-      });
-
-      console.log("setupverify ejecutado ✔");
-
-    } catch (err) {
-      console.error(err);
-    }
-  }
-});
-
-/* =========================
-   BOTÓN VERIFICACIÓN
+   BOTÓN
 ========================= */
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
@@ -102,11 +63,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
       const member = await interaction.guild.members.fetch(interaction.user.id);
 
-      const role = interaction.guild.roles.cache.get(ROLE_ID);
+      // 🔎 buscar rol por nombre
+      const role = interaction.guild.roles.cache.find(r => r.name === ROLE_NAME);
 
       if (!role) {
         return interaction.reply({
-          content: "❌ el rol unknownVerify no existe",
+          content: "❌ no existe el rol unknownVerify",
           flags: 64
         });
       }
@@ -126,11 +88,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
 
     } catch (err) {
-      console.error("error en verificación:", err);
+      console.error(err);
 
       if (!interaction.replied) {
         interaction.reply({
-          content: "ocurrió un error al verificarte ❌",
+          content: "error al verificarte ❌",
           flags: 64
         });
       }
