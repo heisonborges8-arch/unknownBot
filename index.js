@@ -110,4 +110,32 @@ client.on(Events.InteractionCreate, async (interaction) => {
 /* =========================
    LOGIN
 ========================= */
+const BOOSTER_ROLE = "unknownBooster";
+
+client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
+  try {
+
+    if (!oldMember.premiumSince && newMember.premiumSince) {
+
+      const boosterRole = newMember.guild.roles.cache.find(
+        r => r.name === BOOSTER_ROLE
+      );
+
+      if (!boosterRole) {
+        console.log("❌ no existe el rol unknownBooster");
+        return;
+      }
+
+      if (newMember.roles.cache.has(boosterRole.id)) return;
+
+      await newMember.roles.add(boosterRole);
+
+      console.log(`${newMember.user.tag} recibió unknownBooster ✔`);
+    }
+
+  } catch (err) {
+    console.error("error booster:", err);
+  }
+});
+
 client.login(process.env.TOKEN);
