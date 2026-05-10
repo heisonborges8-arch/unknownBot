@@ -130,6 +130,16 @@ client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
 
       await newMember.roles.add(boosterRole);
 
+const channel = newMember.guild.channels.cache.get("1502827868218986527");
+
+if (channel) {
+  channel.send(
+    `🚀 ${newMember.user} acaba de boostear el servidor`
+  );
+}
+
+console.log(`${newMember.user.tag} recibió unknownBooster ✔`);
+
       console.log(`${newMember.user.tag} recibió unknownBooster ✔`);
     }
 
