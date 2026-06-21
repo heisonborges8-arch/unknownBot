@@ -16,7 +16,8 @@ const ROLE_NAME = "unknownVerify";
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages
   ]
 });
 
@@ -63,6 +64,50 @@ client.once(Events.ClientReady, async (c) => {
    INTERACCIONES
 ========================= */
 client.on(Events.InteractionCreate, async (interaction) => {
+
+  // COMANDO /CLEAR
+  if (interaction.isChatInputCommand()) {
+
+    if (interaction.commandName === "clear") {
+
+      if (!interaction.member.permissions.has("ManageMessages")) {
+        return interaction.reply({
+          content: "❌ No tienes permisos para usar este comando.",
+          flags: 64
+        });
+      }
+
+      const cantidad = interaction.options.getInteger("cantidad");
+
+      if (cantidad < 1 || cantidad > 100) {
+        return interaction.reply({
+          content: "❌ Debe ser un número entre 1 y 100.",
+          flags: 64
+        });
+      }
+
+      try {
+        await interaction.channel.bulkDelete(cantidad, true);
+
+        return interaction.reply({
+          content: `🗑️ Se eliminaron ${cantidad} mensajes.`,
+          flags: 64
+        });
+
+      } catch (err) {
+        console.error(err);
+
+        return interaction.reply({
+          content: "❌ No pude borrar los mensajes.",
+          flags: 64
+        });
+      }
+    }
+
+    return;
+  }
+
+  // BOTÓN DE VERIFICACIÓN
   if (!interaction.isButton()) return;
 
   if (interaction.customId === "verify") {
