@@ -16,7 +16,9 @@ const ROLE_NAME = "unknownVerify";
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
   ]
 });
 
@@ -145,6 +147,43 @@ console.log(`${newMember.user.tag} recibió unknownBooster ✔`);
 
   } catch (err) {
     console.error("error booster:", err);
+  }
+});
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+
+  const args = message.content.split(" ");
+  const command = args[0].toLowerCase();
+
+  // !limpiar 50
+  if (command === "!limpiar") {
+
+    if (!message.member.permissions.has("ManageMessages")) {
+      return message.reply("❌ No tienes permisos.");
+    }
+
+    const cantidad = parseInt(args[1]);
+
+    if (!cantidad || cantidad < 1 || cantidad > 100) {
+      return message.reply("Uso: !limpiar 1-100");
+    }
+
+    try {
+      await message.channel.bulkDelete(cantidad, true);
+
+      const aviso = await message.channel.send(
+        `🧹 Se eliminaron ${cantidad} mensajes.`
+      );
+
+      setTimeout(() => {
+        aviso.delete().catch(() => {});
+      }, 3000);
+
+    } catch (err) {
+      console.error(err);
+      message.reply("❌ Error al borrar mensajes.");
+    }
   }
 });
 
