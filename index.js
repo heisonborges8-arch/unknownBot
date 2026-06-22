@@ -12,7 +12,7 @@ require("dotenv").config();
 
 const CHANNEL_ID = "1502120027778977882";
 const ROLE_NAME = "unknownVerify";
-const OWNER_ROLE = "unknownOwner";
+const OWNER_ROLE = "unknownBot";
 
 const client = new Client({
   intents: [
