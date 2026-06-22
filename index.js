@@ -72,49 +72,115 @@ client.once(Events.ClientReady, async (c) => {
 ========================= */
 client.on(Events.InteractionCreate, async (interaction) => {
 
-  if (interaction.isChatInputCommand()) {
+  if (!interaction.isChatInputCommand()) return;
 
-    /* ================= CLEAR ================= */
-    if (interaction.commandName === "clear") {
+  /* ================= CLEAR ================= */
+  if (interaction.commandName === "clear") {
 
-      if (!isOwner(interaction)) {
-        return interaction.reply({
-          content: "❌ Solo unknownOwner puede usar esto.",
-          flags: 64
-        });
-      }
-
-      const cantidad = interaction.options.getInteger("cantidad");
-
-      if (cantidad < 1 || cantidad > 100) {
-        return interaction.reply({
-          content: "❌ Debe ser entre 1 y 100.",
-          flags: 64
-        });
-      }
-
-      try {
-        await interaction.channel.bulkDelete(cantidad, true);
-
-        return interaction.reply({
-          content: `🗑️ Se eliminaron ${cantidad} mensajes.`,
-          flags: 64
-        });
-
-      } catch (err) {
-        console.error(err);
-
-        return interaction.reply({
-          content: "❌ Error al borrar mensajes.",
-          flags: 64
-        });
-      }
+    if (!isOwner(interaction)) {
+      return interaction.reply({
+        content: "❌ Solo unknownBot puede usar esto.",
+        flags: 64
+      });
     }
 
-    return;
+    const cantidad = interaction.options.getInteger("cantidad");
+
+    if (cantidad < 1 || cantidad > 100) {
+      return interaction.reply({
+        content: "❌ Debe ser entre 1 y 100.",
+        flags: 64
+      });
+    }
+
+    try {
+      await interaction.channel.bulkDelete(cantidad, true);
+
+      return interaction.reply({
+        content: `🗑️ Se eliminaron ${cantidad} mensajes.`,
+        flags: 64
+      });
+
+    } catch (err) {
+      console.error(err);
+      return interaction.reply({
+        content: "❌ Error al borrar mensajes.",
+        flags: 64
+      });
+    }
   }
 
-  /* ================= BUTTON VERIFY ================= */
+  /* ================= LOCK ================= */
+  if (interaction.commandName === "lock") {
+
+    if (!isOwner(interaction)) {
+      return interaction.reply({ content: "❌ Solo unknownBot puede usar esto.", flags: 64 });
+    }
+
+    await interaction.channel.permissionOverwrites.edit(
+      interaction.guild.roles.everyone,
+      { SendMessages: false }
+    );
+
+    return interaction.reply({ content: "🔒 Canal bloqueado", flags: 64 });
+  }
+
+  /* ================= UNLOCK ================= */
+  if (interaction.commandName === "unlock") {
+
+    if (!isOwner(interaction)) {
+      return interaction.reply({ content: "❌ Solo unknownBot puede usar esto.", flags: 64 });
+    }
+
+    await interaction.channel.permissionOverwrites.edit(
+      interaction.guild.roles.everyone,
+      { SendMessages: true }
+    );
+
+    return interaction.reply({ content: "🔓 Canal desbloqueado", flags: 64 });
+  }
+
+  /* ================= EMBED ================= */
+  if (interaction.commandName === "embed") {
+
+    if (!isOwner(interaction)) {
+      return interaction.reply({ content: "❌ Solo unknownBot puede usar esto.", flags: 64 });
+    }
+
+    const titulo = interaction.options.getString("titulo");
+    const descripcion = interaction.options.getString("descripcion");
+
+    const embed = new EmbedBuilder()
+      .setTitle(titulo)
+      .setDescription(descripcion)
+      .setColor(0x2b2d31);
+
+    return interaction.reply({ embeds: [embed] });
+  }
+
+  /* ================= POLL ================= */
+  if (interaction.commandName === "poll") {
+
+    if (!isOwner(interaction)) {
+      return interaction.reply({ content: "❌ Solo unknownBot puede usar esto.", flags: 64 });
+    }
+
+    const pregunta = interaction.options.getString("pregunta");
+
+    const msg = await interaction.reply({
+      content: `📊 **Encuesta:** ${pregunta}`,
+      fetchReply: true
+    });
+
+    await msg.react("👍");
+    await msg.react("👎");
+  }
+});
+
+/* =========================
+   VERIFY BUTTON
+========================= */
+client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isButton()) return;
 
   if (interaction.customId === "verify") {
