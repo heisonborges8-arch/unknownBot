@@ -12,6 +12,7 @@ require("dotenv").config();
 
 const CHANNEL_ID = "1502120027778977882";
 const ROLE_NAME = "unknownVerify";
+const OWNER_ROLE = "unknownOwner";
 
 const client = new Client({
   intents: [
@@ -20,6 +21,15 @@ const client = new Client({
     GatewayIntentBits.GuildMessages
   ]
 });
+
+/* =========================
+   CHECK OWNER
+========================= */
+function isOwner(interaction) {
+  return interaction.member.roles.cache.some(
+    r => r.name === OWNER_ROLE
+  );
+}
 
 /* =========================
    READY
@@ -31,10 +41,7 @@ client.once(Events.ClientReady, async (c) => {
   try {
     const channel = await c.channels.fetch(CHANNEL_ID);
 
-    if (!channel) {
-      console.log("❌ canal no encontrado");
-      return;
-    }
+    if (!channel) return console.log("❌ canal no encontrado");
 
     const embed = new EmbedBuilder()
       .setTitle("verificación requerida")
@@ -65,14 +72,14 @@ client.once(Events.ClientReady, async (c) => {
 ========================= */
 client.on(Events.InteractionCreate, async (interaction) => {
 
-  // COMANDO /CLEAR
   if (interaction.isChatInputCommand()) {
 
+    /* ================= CLEAR ================= */
     if (interaction.commandName === "clear") {
 
-      if (!interaction.member.permissions.has("ManageMessages")) {
+      if (!isOwner(interaction)) {
         return interaction.reply({
-          content: "❌ No tienes permisos para usar este comando.",
+          content: "❌ Solo unknownOwner puede usar esto.",
           flags: 64
         });
       }
@@ -81,7 +88,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       if (cantidad < 1 || cantidad > 100) {
         return interaction.reply({
-          content: "❌ Debe ser un número entre 1 y 100.",
+          content: "❌ Debe ser entre 1 y 100.",
           flags: 64
         });
       }
@@ -98,7 +105,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         console.error(err);
 
         return interaction.reply({
-          content: "❌ No pude borrar los mensajes.",
+          content: "❌ Error al borrar mensajes.",
           flags: 64
         });
       }
@@ -107,7 +114,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return;
   }
 
-  // BOTÓN DE VERIFICACIÓN
+  /* ================= BUTTON VERIFY ================= */
   if (!interaction.isButton()) return;
 
   if (interaction.customId === "verify") {
@@ -166,21 +173,16 @@ client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
         r => r.name === BOOSTER_ROLE
       );
 
-      if (!boosterRole) {
-        console.log("❌ no existe el rol unknownBooster");
-        return;
-      }
+      if (!boosterRole) return;
 
-      if (newMember.roles.cache.has(boosterRole.id)) return;
+      if (!newMember.roles.cache.has(boosterRole.id)) {
+        await newMember.roles.add(boosterRole);
 
-      await newMember.roles.add(boosterRole);
+        const channel = newMember.guild.channels.cache.get("1502827868218986527");
 
-      const channel = newMember.guild.channels.cache.get("1502827868218986527");
-
-      if (channel) {
-        channel.send(
-          `🚀 ${newMember.user} acaba de boostear el servidor`
-        );
+        if (channel) {
+          channel.send(`🚀 ${newMember.user} acaba de boostear el servidor`);
+        }
       }
 
       console.log(`${newMember.user.tag} recibió unknownBooster ✔`);
