@@ -23,7 +23,7 @@ const client = new Client({
 });
 
 /* =========================
-   CHECK OWNER
+   CHECK OWNER (SOLO unknownOwner)
 ========================= */
 function isOwner(interaction) {
   return interaction.member.roles.cache.some(
@@ -68,21 +68,67 @@ client.once(Events.ClientReady, async (c) => {
 });
 
 /* =========================
-   INTERACCIONES
+   INTERACCIONES (TODOS LOS COMANDOS PROTEGIDOS)
 ========================= */
 client.on(Events.InteractionCreate, async (interaction) => {
 
+  /* ================= BUTTON VERIFY ================= */
+  if (interaction.isButton()) {
+    if (interaction.customId === "verify") {
+      try {
+        const member = await interaction.guild.members.fetch(interaction.user.id);
+
+        const role = interaction.guild.roles.cache.find(
+          r => r.name === ROLE_NAME
+        );
+
+        if (!role) {
+          return interaction.reply({
+            content: "❌ no existe el rol unknownVerify",
+            flags: 64
+          });
+        }
+
+        if (member.roles.cache.has(role.id)) {
+          return interaction.reply({
+            content: "ya estás verificado ✔",
+            flags: 64
+          });
+        }
+
+        await member.roles.add(role);
+
+        return interaction.reply({
+          content: "te has verificado correctamente ✔",
+          flags: 64
+        });
+
+      } catch (err) {
+        console.error("error verificación:", err);
+
+        if (!interaction.replied) {
+          interaction.reply({
+            content: "error al verificarte ❌",
+            flags: 64
+          });
+        }
+      }
+    }
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) return;
+
+  /* ================= BLOQUE GENERAL DE SEGURIDAD ================= */
+  if (!isOwner(interaction)) {
+    return interaction.reply({
+      content: "❌ Solo usuarios con el rol unknownOwner pueden usar comandos.",
+      flags: 64
+    });
+  }
 
   /* ================= CLEAR ================= */
   if (interaction.commandName === "clear") {
-
-    if (!isOwner(interaction)) {
-      return interaction.reply({
-        content: "❌ Solo unknownBot puede usar esto.",
-        flags: 64
-      });
-    }
 
     const cantidad = interaction.options.getInteger("cantidad");
 
@@ -113,10 +159,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
   /* ================= LOCK ================= */
   if (interaction.commandName === "lock") {
 
-    if (!isOwner(interaction)) {
-      return interaction.reply({ content: "❌ Solo unknownBot puede usar esto.", flags: 64 });
-    }
-
     await interaction.channel.permissionOverwrites.edit(
       interaction.guild.roles.everyone,
       { SendMessages: false }
@@ -128,10 +170,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
   /* ================= UNLOCK ================= */
   if (interaction.commandName === "unlock") {
 
-    if (!isOwner(interaction)) {
-      return interaction.reply({ content: "❌ Solo unknownBot puede usar esto.", flags: 64 });
-    }
-
     await interaction.channel.permissionOverwrites.edit(
       interaction.guild.roles.everyone,
       { SendMessages: true }
@@ -142,10 +180,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   /* ================= EMBED ================= */
   if (interaction.commandName === "embed") {
-
-    if (!isOwner(interaction)) {
-      return interaction.reply({ content: "❌ Solo unknownBot puede usar esto.", flags: 64 });
-    }
 
     const titulo = interaction.options.getString("titulo");
     const descripcion = interaction.options.getString("descripcion");
@@ -161,10 +195,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
   /* ================= POLL ================= */
   if (interaction.commandName === "poll") {
 
-    if (!isOwner(interaction)) {
-      return interaction.reply({ content: "❌ Solo unknownBot puede usar esto.", flags: 64 });
-    }
-
     const pregunta = interaction.options.getString("pregunta");
 
     const msg = await interaction.reply({
@@ -174,54 +204,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
     await msg.react("👍");
     await msg.react("👎");
-  }
-});
-
-/* =========================
-   VERIFY BUTTON
-========================= */
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isButton()) return;
-
-  if (interaction.customId === "verify") {
-    try {
-      const member = await interaction.guild.members.fetch(interaction.user.id);
-
-      const role = interaction.guild.roles.cache.find(
-        r => r.name === ROLE_NAME
-      );
-
-      if (!role) {
-        return interaction.reply({
-          content: "❌ no existe el rol unknownVerify",
-          flags: 64
-        });
-      }
-
-      if (member.roles.cache.has(role.id)) {
-        return interaction.reply({
-          content: "ya estás verificado ✔",
-          flags: 64
-        });
-      }
-
-      await member.roles.add(role);
-
-      return interaction.reply({
-        content: "te has verificado correctamente ✔",
-        flags: 64
-      });
-
-    } catch (err) {
-      console.error("error verificación:", err);
-
-      if (!interaction.replied) {
-        interaction.reply({
-          content: "error al verificarte ❌",
-          flags: 64
-        });
-      }
-    }
   }
 });
 
